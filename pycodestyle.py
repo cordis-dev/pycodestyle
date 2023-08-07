@@ -148,6 +148,7 @@ STARTSWITH_INDENT_STATEMENT_REGEX = re.compile(
 )
 DUNDER_REGEX = re.compile(r"^__([^\s]+)__(?::\s*[a-zA-Z.0-9_\[\]\"]+)? = ")
 BLANK_EXCEPT_REGEX = re.compile(r"except\s*:")
+TODO_REGEX = re.compile(r'^\s*#\s?(TODO|FIXME):.+$')
 
 if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
     FSTRING_START = tokenize.FSTRING_START
@@ -451,6 +452,15 @@ def extraneous_whitespace(logical_line):
             code = ('E202' if char in '}])' else 'E203')  # if char in ',;:'
             yield found, f"{code} whitespace before '{char}'"
 
+@register_check
+def warning_comment(physical_line):
+    r"""Resolve warning comment
+    """
+    for match in TODO_REGEX.finditer(physical_line):
+        text = match.group()
+        char = text.strip()
+        found = match.start()
+        return found + 1, "C100 unresolved comment '%s'" % char
 
 @register_check
 def whitespace_around_keywords(logical_line):
